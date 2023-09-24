@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+
+EWW_BIN="${HOME}/.local/bin/eww"
+EWW_CONFIG="${HOME}/.config/eww"
+
+LOCK_DIR_PATH="${HOME}/.cache/eww/window"
+
+close_window() {
+  "${EWW_BIN}" -c "${EWW_CONFIG}" close "$1"
+  rm "${LOCK_DIR_PATH}/${name}.lock"
+}
+
+window() {
+  local name="$1"
+
+  # Open widgets
+  if [ ! -f "${LOCK_DIR_PATH}/${name}.lock" ]; then
+    # close opened window(s)
+    for lock_file in $(ls -1 "${LOCK_DIR_PATH}/"); do
+      opened_name="$(echo "$lock_file" | sed 's/\.lock//')"
+
+      close_window "$opened_name"
+    done
+
+    # run
+    "${EWW_BIN}" -c "${EWW_CONFIG}" open "$name"
+    touch "${LOCK_DIR_PATH}/${name}.lock"
+  else
+    close_window "$name"
+  fi
+}
+
+
+# Run eww daemon if not running
+if [[ ! $(pidof eww) ]]; then
+    "$EWW_BIN" daemon
+    sleep 1
+fi
+
+mkdir -p "$LOCK_DIR_PATH"
+
+case "$1" in
+  "battery")
+    window "battery"
+    ;;
+  "calendar")
+    window "calendar"
+    ;;
+  "music")
+    window "music_win"
+    ;;
+  "launcher")
+    "${HOME}/.local/bin/launcher"
+    ;;
+  "wifi")
+    #kitty -e nmtui
+    ;;
+esac

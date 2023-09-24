@@ -1,0 +1,422 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;  Widget Section's							 ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; (defvar eww "$HOME/.local/bin/eww -c $HOME/.config/eww")
+
+;; Launcher ;;
+(defwidget launcher []
+	(box
+		:orientation "h"
+		:space-evenly false
+		:spacing -15
+		(button
+			:class "launcher_icon"
+			:onclick "scripts/popup launcher" ""
+		)
+	)
+)
+
+;; Workspaces ;;
+(defwidget workspaces []
+  (box
+    :class "workspaces"
+    :orientation "h"
+    :space-evenly true
+    :halign "start"
+    :spacing 10
+    (button :onclick "wmctrl -s 0" 1)
+    (button :onclick "wmctrl -s 1" 2)
+    (button :onclick "wmctrl -s 2" 3)
+    (button :onclick "wmctrl -s 3" 4)
+    (button :onclick "wmctrl -s 4" 5)
+    (button :onclick "wmctrl -s 5" 6)
+    (button :onclick "wmctrl -s 6" 7)
+    (button :onclick "wmctrl -s 7" 8)
+    (button :onclick "wmctrl -s 8" 9)
+    (button :onclick "wmctrl -s 9" 10)
+  )
+)
+(deflisten workspace "scripts/workspace")
+
+;; Music ;;
+;; (box :class "song_cover_art" :vexpand false :hexpand false :style "background-image: url('${cover_art}');")
+(defwidget music []
+  (eventbox
+    :onhover "${EWW_CMD} update music_reveal=true"
+		:onhoverlost "${EWW_CMD} update music_reveal=false"
+		(box :class "module-2" :orientation "h" :space-evenly false :vexpand false :hexpand false
+			(button :class "song" :wrap "true" :onclick "./scripts/popup music" song)
+	    (revealer
+        :transition "slideright"
+			  :reveal music_reveal
+			  :duration "350ms"
+        (box :orientation "h" :vexpand false :hexpand false
+          (button :class "song_btn_prev" :onclick "playerctl previous" "")
+					(button :class "song_btn_play" :onclick "playerctl play-pause" song_status)
+					(button :class "song_btn_next" :onclick "playerctl next" "")
+        )
+      )
+    )
+  )
+)
+(deflisten song :initial ""
+  "playerctl --follow metadata --format '{{ artist }} - {{ title }}' || true")
+(deflisten song_status :initial ""
+  "playerctl --follow status || true")
+(deflisten song_artist :initial ""
+  "playerctl --follow metadata --format '{{ artist }}' || true")
+(deflisten song_art :initial ""
+  "playerctl --follow metadata --format '{{ mpris:artUrl }}' | sed 's#^file://##' | tail -n 1 || true")
+(defvar music_reveal false)
+
+(defwidget music_pop []
+  (box :class "music_pop" :orientation "h" :space-evenly false :vexpand false :hexpand false
+    (image :path "${song_art}" :image-width 160 :image-height 160)
+    (box :orientation "v" :spacing 20 :space-evenly false :vexpand false :hexpand false
+      (label :halign "center" :class "music" :wrap true :limit-width 13 :text song)
+      (label :halign "center" :class "music_artist" :wrap true :limit-width 15 :text song_artist)
+      (box :orientation "h" :spacing 15 :halign "center" :space-evenly false :vexpand false :hexpand false
+        (button :class "music_btn_prev" :onclick "./scripts/music_info --prev" "")
+        (button :class "music_btn_play" :onclick "./scripts/music_info --toggle" song_status)
+        (button :class "music_btn_next" :onclick "./scripts/music_info --next" "")
+      )
+;;      (box :class "music_bar" :halign "center" :vexpand "false" :hexpand "false" :space-evenly "false"
+;;        (scale :onscroll "mpc -q seek {}" :min 0 :active "true" :max 100 :value current_status)
+;;      )
+    )
+  )
+)
+
+;;  music
+(defwindow music_win
+  :stacking "fg"
+  :focusable "false"
+  :screen 1
+	:geometry (geometry :x "0" :y "7%" :width 428 :height 104 :anchor "top center")
+
+	(music_pop)
+)
+
+;; CPU ;;
+(defwidget cpu []
+  (eventbox
+    :onhover "${EWW_CMD} update cpu_reveal=true"
+    :onhoverlost "${EWW_CMD} update cpu_reveal=false"
+    (box :class "module-2" :space-evenly false :orientation "h" :spacing "3"
+      (label :class "bright_icon" :tooltip "cpu load" :text " ${EWW_CPU.avg}")
+      (revealer
+        :transition "slideright"
+        :reveal cpu_reveal
+        :duration "350ms"
+        (label :class "bright_icon" :tooltip "cpu" :text "${battery_status}")
+      )
+    )
+  )
+)
+(defvar cpu_reveal false)
+
+;; Memory ;;
+(defwidget mem []
+  (eventbox
+    :onhover "${EWW_CMD} update mem_reveal=true"
+    :onhoverlost "${EWW_CMD} update mem_reveal=false"
+    (box :class "module-2" :space-evenly false :orientation "h" :spacing "3"
+      (label :class "bright_icon" :tooltip "free memory" :text "󰍛 ${EWW_RAM.free_mem}")
+      (revealer
+        :transition "slideright"
+        :reveal cpu_reveal
+        :duration "350ms"
+        (label :class "bright_icon" :tooltip "cpu" :text "Total: ${EWW_RAM.total_mem} | Used: ${EWW_RAM.used_mem}")
+      )
+    )
+  )
+)
+(defvar mem_reveal false)
+
+;; Keyboard Layout ;;
+;; Security ;;
+;; Notification ;;
+;; Power ;;
+
+;; Battery ;;
+(defwidget bat []
+  (eventbox
+    :onhover "${EWW_CMD} update bat_reveal=true"
+    :onhoverlost "${EWW_CMD} update bat_reveal=false"
+    (box :class "module-2" :space-evenly false :orientation "h" :spacing "3"
+      (label :class "bat_icon" :tooltip "battery" :text "󰁹 ${battery_percent}%")
+      (revealer
+        :transition "slideright"
+        :reveal bat_reveal
+        :duration "350ms"
+        (label :class "bat_icon" :tooltip "battery" :text "${battery_status}")
+      )
+    )
+  )
+)
+(defpoll battery_percent :interval "15s" "./scripts/battery --bat")
+(defpoll battery_status :interval "1m" "./scripts/battery --bat-st")
+(defvar bat_reveal false)
+
+;; Volume ;;
+(defwidget volume []
+  (eventbox
+    :onhover "${EWW_CMD} update vol_reveal=true"
+		:onhoverlost "${EWW_CMD} update vol_reveal=false"
+    (box :class "module-2" :space-evenly "false" :orientation "h" :spacing "3"
+      (button :class "volume_icon" :onclick "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle" "󰕾")
+      (revealer
+        :transition "slideleft"
+        :reveal vol_reveal
+        :duration "350ms"
+        (scale
+          :class "volbar"
+          :value volume_percent
+          :tooltip "${volume_percent}%"
+          :max 100
+          :min 0
+          :onchange "wpctl set-volume @DEFAULT_AUDIO_SINK@ {}%"
+        )
+      )
+    )
+  )
+)
+(defpoll volume_percent :interval "10s"
+  "wpctl get-volume @DEFAULT_AUDIO_SINK@ | awk -F '.' '{ print $2 }' | awk '{ print $1 }'")
+(defvar vol_reveal false)
+
+;; Mic ;;
+(defwidget mic []
+  (eventbox
+    :onhover "${EWW_CMD} update mic_reveal=true"
+		:onhoverlost "${EWW_CMD} update mic_reveal=false"
+    (box :class "module-2" :space-evenly "false" :orientation "h" :spacing "3"
+      (button :class "volume_icon" :onclick "wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle" "")
+      (revealer :transition "slideleft"
+        :reveal mic_reveal
+        :duration "350ms"
+        (scale
+          :class "volbar"
+          :value mic_percent
+          :tooltip "${mic_percent}%"
+          :max 100
+          :min 0
+          :onchange "wpctl set-volume @DEFAULT_AUDIO_SOURCE@ {}%"
+        )
+      )
+    )
+  )
+)
+(defpoll mic_percent :interval "10s"
+  "wpctl get-volume @DEFAULT_AUDIO_SOURCE@ | awk -F '.' '{ print $2 }' | awk '{ print $1 }'")
+(defvar mic_reveal false)
+
+;; Brightness ;;
+(defwidget brightness []
+  (eventbox
+    :onhover "${EWW_CMD} update br_reveal=true"
+    :onhoverlost "${EWW_CMD} update br_reveal=false"
+    (box :class "module-2" :space-evenly false :orientation "h" :spacing "3"
+      (label :class "bright_icon" :tooltip "brightness" :text "󰃞")
+      (revealer
+        :transition "slideleft"
+        :reveal br_reveal
+        :duration "350ms"
+        (scale
+          :class "brightbar"
+          :value brightness_percent
+          :tooltip "${brightness_percent}%"
+          :max 100
+          :min 0
+          :onchange "sudo brightnessctl -c backlight set {}%"
+        )
+      )
+    )
+  )
+)
+(defpoll brightness_percent :interval "10s"
+  "brightnessctl -m -c backlight info | awk -F',' '{print substr($4, 0, length($4)-1)}' | tr -d '%'")
+(defvar br_reveal false)
+
+;; Wifi ;;
+(defwidget wifi []
+  (eventbox
+    :onhover "${EWW_CMD} update wifi_rev=true"
+		:onhoverlost "${EWW_CMD} update wifi_rev=false"
+		(box :vexpand "false" :hexpand "false" :space-evenly "false"
+			(button :class "module-wif" :style "color: ${COL_WLAN};" :onclick "networkmanager_dmenu" WLAN_ICON)
+      (revealer
+        :transition "slideright"
+        :reveal wifi_rev
+        :duration "350ms"
+        (label
+          :class "module_essid"
+          :text ESSID_WLAN
+        )
+      )
+    )
+  )
+)
+(defpoll COL_WLAN :interval "1m" "./scripts/wifi --COL")
+(defpoll ESSID_WLAN :interval "1m" "./scripts/wifi --ESSID")
+(defpoll WLAN_ICON :interval "1m" "./scripts/wifi --ICON")
+(defvar wifi_rev false)
+
+;; Bluetooth ;;
+(defwidget bluetooth []
+  (box
+    :orientation "h"
+    :space-evenly false
+    (button
+      :onclick "blueman-manager"
+      "󰂯"
+    )
+  )
+)
+
+;; Clock ;;
+(defwidget time []
+	(box
+		:orientation "h"
+		:class "time"
+		:valign "end"
+		(button
+			:onclick "scripts/popup calendar"
+			:class "time-hour"
+			time
+		)
+	)
+)
+(defpoll date :interval "30m" "date '+%b %d, %Y'")
+(defpoll time :interval "1s" "date '+%H:%M:%S'")
+
+;; Calendar ;;
+(defwidget cal []
+	(box
+    :orientation "h"
+    :class "cal-box"
+	  (box
+      :class "cal-inner-box"
+	    (calendar
+        :class "cal"
+			  :day calendar_day
+			  :month calendar_month
+			  :year calendar_year
+      )
+    )
+  )
+)
+(defpoll calendar_day :interval "10h" "date '+%d'")
+(defpoll calendar_month :interval "10h" "scripts/calendar")
+(defpoll calendar_year :interval "10h" "date '+%Y'")
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;							Zones Section's							 ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defwidget system []
+	(box
+		:orientation "h"
+		:space-evenly false
+
+    (cpu)
+    (mem)
+    (bat)
+	)
+)
+
+(defwidget control []
+	(box
+		:orientation "h"
+    :class "control"
+		:space-evenly false
+
+    (volume)
+    (mic)
+    (brightness)
+    (wifi)
+		(bluetooth)
+	)
+)
+
+(defwidget left []
+	(box
+    :orientation "h"
+    :class "right_modules"
+		:space-evenly false
+    :halign "start"
+
+    (launcher)
+    (workspaces)
+  )
+)
+
+(defwidget center []
+	(box
+    :orientation "h"
+    :class "center_modules"
+		:space-evenly false
+    :halign "center"
+
+    ;;(music)
+  )
+)
+
+(defwidget right []
+	(box
+    :orientation "h"
+    :class "left_modules"
+		:space-evenly false
+    :halign "end"
+
+    (system)
+    (control)
+    (time)
+  )
+)
+
+(defwidget bar_1 []
+  (box
+    :orientation "h"
+    :class "bar_class"
+
+    (left)
+    (center)
+    (right)
+  )
+)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;							Window Section's							 ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Bar Windows ;;
+(defwindow bar
+	:geometry (geometry
+		:x "0px"
+		:y "0px"
+		:width "100%"
+		:height "30px"
+		:anchor "top center"
+	)
+	:stacking "fg"
+	:reserve (struts :distance "40px" :side "top")
+	:windowtype "dock"
+	:wm-ignore false
+
+  (bar_1)
+)
+
+;; Calendar Windows ;;
+(defwindow calendar
+	:geometry (geometry
+		:x "-20px"
+		:y "7%"
+		:width "270px"
+		:height "60px"
+    :anchor "top right"
+	)
+
+	(cal)
+)
